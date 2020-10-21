@@ -6,6 +6,7 @@ verify_ssl = true
 [dev-packages]
 pylint = "*"
 black = "*"
+pyinstaller = "*"
 
 [packages]
 pydub = "*"
@@ -16,3 +17,6 @@ python_version = "3.8"
 
 [pipenv]
 allow_prereleases = true
+
+[scripts]
+buildexe = "pyinstaller -D -y -n pbsgen main.py"

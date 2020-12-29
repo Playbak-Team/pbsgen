@@ -1,8 +1,11 @@
+import argparse
 import itertools
 import sys
+import warnings
 from pathlib import Path
 from typing import Iterable, Iterator, List, TypeVar
 
+warnings.filterwarnings("ignore", category=RuntimeWarning)
 import ffmpeg
 import pydub
 
@@ -20,7 +23,11 @@ SILENT_SPEED = 5
 SPEECH_SPEED = 1.5
 
 
-def main(videoFile: Path):
+def main():
+    videoFile = Path(args.input).resolve()
+    if args.ffmpeg:
+        pydub.AudioSegment.converter = args.ffmpeg
+
     # Construct file names
     audioFile = videoFile.with_name("{}_audio.wav".format(videoFile.stem))
     pbsFile = videoFile.with_name("{}.pbs".format(videoFile.stem))
@@ -30,23 +37,22 @@ def main(videoFile: Path):
     # Open sound file.
     sound = pydub.AudioSegment.from_file(audioFile)
 
-    chunk_silent = [
-        c.dBFS < SILENCE_THRESHOLD
-        for c in chunker(sound, CHUNK_SIZE)
-    ]
+    chunk_silent = [c.dBFS < SILENCE_THRESHOLD for c in chunker(sound, CHUNK_SIZE)]
 
     normalized = normalize(chunk_silent)
 
-    speed = [SILENT_SPEED if cs else SPEECH_SPEED for cs in normalized] 
+    speed = [SILENT_SPEED if cs else SPEECH_SPEED for cs in normalized]
 
     pbs_writer(pbsFile, speed)
+    print(pbsFile)
+
 
 def normalize(source):
     normalized = []
     for s, si in itertools.groupby(source):
         sl = list(si)
         if s:
-            if len(sl) <= MIN_GROUP :
+            if len(sl) <= MIN_GROUP:
                 normalized += [not bool for bool in sl]
                 continue
             else:
@@ -55,15 +61,13 @@ def normalize(source):
         normalized += sl
     return normalized
 
+
 def pbs_writer(filename: Path, speed: List[int]):
     f = open(filename, "w")
     f.write("{}\n".format(CHUNK_SIZE))
 
     f.writelines(
-        [
-            "{} {}\n".format(x, len(list(y)))
-            for x, y in itertools.groupby(speed)
-        ]
+        ["{} {}\n".format(x, len(list(y))) for x, y in itertools.groupby(speed)]
     )
 
     f.close()
@@ -74,14 +78,21 @@ def chunker(seq: Iterable[T], size: int) -> Iterator[List[T]]:
 
 
 def get_audio(videofile: Path, outfile: Path):
+    cmd = "ffmpeg"
+    if args.ffmpeg:
+        cmd = args.ffmpeg
     try:
         ffmpeg.input(str(videofile)).audio.output(
             str(outfile), acodec="pcm_s16le", ar=44100, ac=2, nostdin=None
-        ).run(quiet=True, overwrite_output=True)
+        ).run(quiet=True, overwrite_output=True, cmd=cmd)
     except ffmpeg._run.Error:
         return False
     return True
 
 
 if __name__ == "__main__":
-    main(Path(sys.argv[1]).resolve())
+    parser = argparse.ArgumentParser(description="pbs file generator")
+    parser.add_argument("ffmpeg", help="Path to ffmpeg.exe")
+    parser.add_argument("input", help="Input Audio File")
+    args = parser.parse_args()
+    main()

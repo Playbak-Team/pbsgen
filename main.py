@@ -12,15 +12,15 @@ import pydub
 T = TypeVar("T")
 
 #  Chunk size in ms
-CHUNK_SIZE = 100
+# CHUNK_SIZE = 100
 MIN_GROUP = 10
 TRANSITION_CHUNK = 3
-# Threshold for what counts as silence in dB
-SILENCE_THRESHOLD = -60
-# Playback speed for silent section
-SILENT_SPEED = 5
-# Playback speed for non-silent section
-SPEECH_SPEED = 1.5
+# # Threshold for what counts as silence in dB
+# SILENCE_THRESHOLD = -60
+# # Playback speed for silent section
+# SILENT_SPEED = 5
+# # Playback speed for non-silent section
+# SPEECH_SPEED = 1.5
 
 
 def main():
@@ -37,11 +37,13 @@ def main():
     # Open sound file.
     sound = pydub.AudioSegment.from_file(audioFile)
 
-    chunk_silent = [c.dBFS < SILENCE_THRESHOLD for c in chunker(sound, CHUNK_SIZE)]
+    chunk_silent = [
+        c.dBFS < args.silence_threshold for c in chunker(sound, args.chunk_size)
+    ]
 
     normalized = normalize(chunk_silent)
 
-    speed = [SILENT_SPEED if cs else SPEECH_SPEED for cs in normalized]
+    speed = [args.silent_speed if cs else args.speech_speed for cs in normalized]
 
     pbs_writer(pbsFile, speed)
     print(pbsFile)
@@ -64,7 +66,7 @@ def normalize(source):
 
 def pbs_writer(filename: Path, speed: List[int]):
     f = open(filename, "w")
-    f.write("{}\n".format(CHUNK_SIZE))
+    f.write("{}\n".format(args.chunk_size))
 
     f.writelines(
         ["{} {}\n".format(x, len(list(y))) for x, y in itertools.groupby(speed)]
@@ -91,8 +93,30 @@ def get_audio(videofile: Path, outfile: Path):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="pbs file generator")
+    parser = argparse.ArgumentParser(
+        description="pbs file generator",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
     parser.add_argument("ffmpeg", help="Path to ffmpeg.exe")
     parser.add_argument("input", help="Input Audio File")
+    parser.add_argument("--chunk_size", help="Chunk size in ms", default=100, type=int)
+    parser.add_argument(
+        "--silence_threshold",
+        help="Threshold for what counts as silence in dB",
+        default=-60,
+        type=int,
+    )
+    parser.add_argument(
+        "--silent_speed",
+        help="Playback speed for silent section",
+        default=3,
+        type=float,
+    )
+    parser.add_argument(
+        "--speech_speed",
+        help="Playback speed for non-silent section",
+        default=1.5,
+        type=float,
+    )
     args = parser.parse_args()
     main()

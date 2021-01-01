@@ -19,4 +19,4 @@ python_version = "3.8"
 allow_prereleases = true
 
 [scripts]
-buildexe = "pyinstaller -D -y -n pbsgen main.py"
+buildexe = "pyinstaller --add-data='./.version;.' -D -y -n pbsgen main.py"

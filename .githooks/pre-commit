@@ -1,0 +1,11 @@
+#!/bin/sh
+
+versionfilename=".version"
+
+# Version number
+echo \# Generated using git pre-commit hook > $versionfilename
+echo -n $(git rev-parse --abbrev-ref HEAD) > $versionfilename
+echo -n "-" >> $versionfilename
+echo $(git describe --tags --long) >> $versionfilename
+
+exec git add $versionfilename

@@ -93,10 +93,16 @@ def get_audio(videofile: Path, outfile: Path):
 
 
 if __name__ == "__main__":
+    try:
+        version = open(".version", "r").readline().strip()
+    except:
+        version = "unknown"
+
     parser = argparse.ArgumentParser(
         description="pbs file generator",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
+    parser.add_argument("--version", action="version", version=version)
     parser.add_argument("ffmpeg", help="Path to ffmpeg.exe")
     parser.add_argument("input", help="Input Video File")
     parser.add_argument("--chunk_size", help="Chunk size in ms", default=100, type=int)

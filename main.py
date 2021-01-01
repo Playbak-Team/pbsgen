@@ -98,7 +98,7 @@ if __name__ == "__main__":
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument("ffmpeg", help="Path to ffmpeg.exe")
-    parser.add_argument("input", help="Input Audio File")
+    parser.add_argument("input", help="Input Video File")
     parser.add_argument("--chunk_size", help="Chunk size in ms", default=100, type=int)
     parser.add_argument(
         "--silence_threshold",

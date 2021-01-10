@@ -46,6 +46,10 @@ def main():
     speed = [args.silent_speed if cs else args.speech_speed for cs in normalized]
 
     pbs_writer(pbsFile, speed)
+
+    if(not args.keep_audio):
+        audioFile.unlink(missing_ok=True)
+
     print(pbsFile)
 
 
@@ -123,6 +127,9 @@ if __name__ == "__main__":
         help="Playback speed for non-silent section",
         default=1.5,
         type=float,
+    )
+    parser.add_argument(
+        "--keep_audio", help="Keep audio files generated.", action="store_true"
     )
     args = parser.parse_args()
     main()
